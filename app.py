@@ -28,10 +28,10 @@ BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 EXCEL_FILE = os.path.join(BASE_DIR, "Mater_PythonDataFromSnowflake.xlsx")
 
 FILTER_COLS = [
-    "Product", "ANC", "Network", "Case_Size", "Band_Size",
+    "Product", "Partner", "ANC", "Network", "Case_Size", "Band_Size",
     "Screen_Type", "Screen_Size", "Chip", "CPU", "GPU",
     "Unified_Memory", "SSD", "StockAvailability", "Lists_Colour",
-    "Robot_Status", "Band_Colour", "Partner",
+    "Robot_Status", "Band_Colour",
 ]
 VALUE_COLS = [
     "PriceMinusPoints", "Selling_Price", "Lists_Price",
@@ -645,7 +645,10 @@ function updateParamTabs() {
 
 function buildFilters() {
   const container = document.getElementById("filter-container");
-  const FCOLS = Object.keys(options).filter(k => k !== "Date");
+  const FILTER_ORDER = ["Product","Partner","ANC","Network","Case_Size","Band_Size",
+    "Screen_Type","Screen_Size","Chip","CPU","GPU","Unified_Memory","SSD",
+    "StockAvailability","Lists_Colour","Robot_Status","Band_Colour"];
+  const FCOLS = FILTER_ORDER.filter(k => options[k] !== undefined);
   FCOLS.forEach(col => {
     const chip = document.createElement("div");
     chip.className = "filter-chip"; chip.id = "fc_" + col;
