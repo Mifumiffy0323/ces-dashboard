@@ -222,6 +222,7 @@ def apply_filters(df: pd.DataFrame) -> pd.DataFrame:
 
 
 filtered_df = apply_filters(DF)
+st.sidebar.caption(f"表示中: {len(filtered_df):,} 件 / 全 {len(DF):,} 件")
 
 # ─── Pivot computation ────────────────────────────────────────────────────────
 def compute_pivot(df: pd.DataFrame, param: str):
@@ -288,13 +289,13 @@ def compute_best_prices(df: pd.DataFrame) -> dict:
 # ─── Pivot HTML renderer ──────────────────────────────────────────────────────
 def build_pivot_html(dates, partners, pivot_vals, stock_vals, changes, comments_map) -> str:
     TH_BASE  = "position:sticky;top:0;z-index:2;background:#f7f9fc;padding:6px 10px;border-bottom:2px solid #e0e5ef;border-right:1px solid #e0e5ef;font-size:10px;color:#8a93a8;text-transform:uppercase;letter-spacing:.4px"
-    TD_BASE  = "padding:5px 10px;border-bottom:1px solid #e0e5ef;border-right:1px solid #e0e5ef;text-align:right;background:#fff"
-    TD_PART  = "position:sticky;left:0;z-index:1;background:#f7f9fc;padding:5px 12px;border-bottom:1px solid #e0e5ef;border-right:2px solid #e0e5ef;font-weight:600;font-size:12px;white-space:nowrap"
-    TH_PART  = "position:sticky;top:0;left:0;z-index:3;background:#f7f9fc;padding:6px 12px;border-bottom:2px solid #e0e5ef;border-right:2px solid #e0e5ef;font-size:10px;color:#8a93a8;text-transform:uppercase;text-align:left"
+    TD_BASE  = "padding:5px 10px;border-bottom:1px solid #e0e5ef;border-right:1px solid #e0e5ef;text-align:right;background:#ffffff;color:#2c3e50"
+    TD_PART  = "position:sticky;left:0;z-index:1;background:#f0f2f6;padding:5px 12px;border-bottom:1px solid #e0e5ef;border-right:2px solid #e0e5ef;font-weight:600;font-size:12px;white-space:nowrap;color:#1a1a2e"
+    TH_PART  = "position:sticky;top:0;left:0;z-index:3;background:#f0f2f6;padding:6px 12px;border-bottom:2px solid #e0e5ef;border-right:2px solid #e0e5ef;font-size:10px;color:#8a93a8;text-transform:uppercase;text-align:left"
 
     rows = [
-        '<div style="overflow-x:auto;max-height:400px;overflow-y:auto;border:1px solid #e0e5ef;border-radius:8px">',
-        '<table style="border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%">',
+        '<div style="overflow-x:auto;max-height:400px;overflow-y:auto;border:1px solid #e0e5ef;border-radius:8px;background:#ffffff">',
+        '<table style="border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%;background:#ffffff">',
         "<thead><tr>",
         f'<th style="{TH_PART}">Partner</th>',
     ]
