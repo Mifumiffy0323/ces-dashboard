@@ -186,19 +186,30 @@ with st.sidebar:
 
     st.markdown("---")
 
-    all_partners = sorted(p for p in DF["Partner"].unique() if p != "-")
-    sel_partners = st.multiselect("Partner", options=all_partners)
-
-    all_products = sorted(DF["Product"].unique())
-    sel_products = st.multiselect("Product", options=all_products)
+    # All filter columns as multiselects
+    FILTER_LABELS = {
+        "Partner": "Partner", "Product": "Product", "ANC": "ANC",
+        "Network": "Network", "Case_Size": "Case Size", "Band_Size": "Band Size",
+        "Screen_Type": "Screen Type", "Screen_Size": "Screen Size",
+        "Chip": "Chip", "CPU": "CPU", "GPU": "GPU",
+        "Unified_Memory": "Unified Memory", "SSD": "SSD",
+        "StockAvailability": "Stock", "Lists_Colour": "Color",
+        "Robot_Status": "Robot Status", "Band_Colour": "Band Color",
+    }
+    sel_filters = {}
+    for col in FILTER_COLS:
+        opts = sorted(v for v in DF[col].unique() if v != "-")
+        if opts:
+            sel_filters[col] = st.multiselect(
+                FILTER_LABELS.get(col, col), options=opts, key=f"f_{col}"
+            )
 
 # ─── Filter application ───────────────────────────────────────────────────────
 def apply_filters(df: pd.DataFrame) -> pd.DataFrame:
     df = df[(df["Date"] >= date_from_str) & (df["Date"] <= date_to_str)]
-    if sel_partners:
-        df = df[df["Partner"].isin(sel_partners)]
-    if sel_products:
-        df = df[df["Product"].isin(sel_products)]
+    for col, vals in sel_filters.items():
+        if vals:
+            df = df[df[col].isin(vals)]
     if bd_focus and BD_FOCUS_CONDITIONS:
         mask = pd.Series(False, index=df.index)
         for cond in BD_FOCUS_CONDITIONS:
@@ -453,7 +464,7 @@ st.markdown("---")
 # ── Data table ────────────────────────────────────────────────────────────────
 st.markdown("### Data Table")
 latest_date = filtered_df["Date"].max()
-if sel_partners:
+if sel_filters.get("Partner"):
     table_df = (
         filtered_df
         .sort_values("Date", ascending=False)
