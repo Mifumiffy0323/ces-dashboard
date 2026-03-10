@@ -1,4 +1,5 @@
-flask
-gunicorn
+streamlit
+plotly
 pandas
 openpyxl
+requests
