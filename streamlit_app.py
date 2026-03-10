@@ -286,48 +286,43 @@ def compute_best_prices(df: pd.DataFrame) -> dict:
             }
     return best
 
-# ─── Pivot HTML renderer ──────────────────────────────────────────────────────
-def build_pivot_html(dates, partners, pivot_vals, stock_vals, changes, comments_map) -> str:
-    TH_BASE  = "position:sticky;top:0;z-index:2;background:#f7f9fc;padding:6px 10px;border-bottom:2px solid #e0e5ef;border-right:1px solid #e0e5ef;font-size:10px;color:#8a93a8;text-transform:uppercase;letter-spacing:.4px"
-    TD_BASE  = "padding:5px 10px;border-bottom:1px solid #e0e5ef;border-right:1px solid #e0e5ef;text-align:right;background:#ffffff;color:#2c3e50"
-    TD_PART  = "position:sticky;left:0;z-index:1;background:#f0f2f6;padding:5px 12px;border-bottom:1px solid #e0e5ef;border-right:2px solid #e0e5ef;font-weight:600;font-size:12px;white-space:nowrap;color:#1a1a2e"
-    TH_PART  = "position:sticky;top:0;left:0;z-index:3;background:#f0f2f6;padding:6px 12px;border-bottom:2px solid #e0e5ef;border-right:2px solid #e0e5ef;font-size:10px;color:#8a93a8;text-transform:uppercase;text-align:left"
-
-    rows = [
-        '<div style="overflow-x:auto;max-height:400px;overflow-y:auto;border:1px solid #e0e5ef;border-radius:8px;background:#ffffff">',
-        '<table style="border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%;background:#ffffff">',
-        "<thead><tr>",
-        f'<th style="{TH_PART}">Partner</th>',
-    ]
-    for d in dates:
-        rows.append(f'<th style="{TH_BASE};min-width:74px;text-align:center">{d[5:]}</th>')
-    rows.append("</tr></thead><tbody>")
-
-    for partner in partners:
-        rows.append("<tr>")
-        rows.append(f'<td style="{TD_PART}">{partner}</td>')
-        for date in dates:
+# ─── Pivot DataFrame builder ──────────────────────────────────────────────────
+def build_pivot_df(dates, partners, pivot_vals, stock_vals, changes, comments_map):
+    col_names = [d[5:] for d in dates]   # MM-DD 表示
+    data = {}
+    for date, col in zip(dates, col_names):
+        col_data = []
+        for partner in partners:
             val      = pivot_vals.get(partner, {}).get(date)
             cart_off = stock_vals.get(partner, {}).get(date, False)
-            changed  = changes.get(partner, {}).get(date, False)
             comment  = comments_map.get(f"{partner}|{date}", "")
-
             if val is None:
-                rows.append(f'<td style="{TD_BASE}"><span style="color:#ccc">—</span></td>')
+                col_data.append("")
             else:
-                color  = "#1d4ed8" if changed else "#2c3e50"
-                weight = "700"     if changed else "400"
-                inner  = f'<span style="color:{color};font-weight:{weight}">{val:,}</span>'
+                cell = f"¥{val:,}"
                 if cart_off:
-                    inner += '<br><span style="font-size:9px;color:#e74c3c;font-weight:600">CART OFF</span>'
+                    cell += " ❌"
                 if comment:
-                    safe_comment = comment.replace('"', "&quot;").replace("<", "&lt;")
-                    inner += f'<br><span style="font-size:9px;color:#8a93a8;font-style:italic" title="{safe_comment}">&#128172;</span>'
-                rows.append(f'<td style="{TD_BASE}">{inner}</td>')
-        rows.append("</tr>")
+                    cell += " 💬"
+                col_data.append(cell)
+        data[col] = col_data
 
-    rows.append("</tbody></table></div>")
-    return "".join(rows)
+    df = pd.DataFrame(data, index=partners)
+    df.index.name = "Partner"
+    return df, col_names
+
+
+def style_pivot(df, dates, col_names, partners, changes):
+    styles = pd.DataFrame("", index=df.index, columns=df.columns)
+    for date, col in zip(dates, col_names):
+        if col not in styles.columns:
+            continue
+        for partner in partners:
+            if partner not in styles.index:
+                continue
+            if changes.get(partner, {}).get(date, False):
+                styles.loc[partner, col] = "color: #1d4ed8; font-weight: bold"
+    return df.style.apply(lambda _: styles, axis=None)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -365,11 +360,12 @@ comments_map = {
 
 st.markdown(
     f"### Pivot Table — {VALUE_LABELS.get(param, param)} &nbsp;"
-    f"<span style='font-size:11px;color:#8a93a8'>(直近15日 / 前日比変化=青太字 / CART OFF=赤)</span>",
+    f"<span style='font-size:11px;color:#8a93a8'>(直近15日 / 前日比変化=青太字 / ❌=CART OFF / 💬=コメントあり)</span>",
     unsafe_allow_html=True,
 )
-pivot_html = build_pivot_html(dates, partners, pivot_vals, stock_vals, changes, comments_map)
-st.markdown(pivot_html, unsafe_allow_html=True)
+pivot_df, col_names = build_pivot_df(dates, partners, pivot_vals, stock_vals, changes, comments_map)
+styled_pivot = style_pivot(pivot_df, dates, col_names, partners, changes)
+st.dataframe(styled_pivot, use_container_width=True)
 
 # ── Comment editor ────────────────────────────────────────────────────────────
 with st.expander("Add / Edit Comment"):
