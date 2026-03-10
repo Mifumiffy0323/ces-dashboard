@@ -301,7 +301,7 @@ def build_pivot_df(dates, partners, pivot_vals, stock_vals, changes, comments_ma
             else:
                 cell = f"¥{val:,}"
                 if cart_off:
-                    cell += " ❌"
+                    cell += " Cart off"
                 if comment:
                     cell += " 💬"
                 col_data.append(cell)
